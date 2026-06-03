@@ -1,36 +1,60 @@
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { splitComma, splitLines } from '../../../shared/lib/text'
-import type { Recipe } from '../../../shared/types'
+import { splitLines } from '../../../shared/lib/text'
+import type { Category, CreateRecipeInput, Recipe, Tag } from '../../../shared/types'
 import { Button } from '../../../shared/ui/Button/Button'
 import { controlClassName, textareaMdClassName, textareaSmClassName } from '../../../shared/ui/Field/classes'
 import { Field } from '../../../shared/ui/Field/Field'
 import { Panel } from '../../../shared/ui/Panel/Panel'
 import styles from './CreateRecipeView.module.css'
 
-export function CreateRecipeView({ onCreate }: { onCreate: (recipe: Recipe) => void }) {
+const difficultyOptions: Array<{ label: string; value: Recipe['difficulty'] }> = [
+  { label: 'Легко', value: 'easy' },
+  { label: 'Средне', value: 'medium' },
+  { label: 'Сложно', value: 'hard' },
+]
+
+export function CreateRecipeView({
+  categories,
+  loading,
+  onCreate,
+  tags,
+}: {
+  categories: Category[]
+  loading: boolean
+  onCreate: (recipe: CreateRecipeInput) => void
+  tags: Tag[]
+}) {
   const [form, setForm] = useState({
     title: '',
     description: '',
-    category: 'Ужин',
-    difficulty: 'Легко' as Recipe['difficulty'],
+    category_id: '',
+    difficulty: 'easy' as Recipe['difficulty'],
     cookTime: 30,
+    prepTime: 0,
     portions: 2,
     ingredients: '',
     steps: '',
-    tags: '',
+    tagIds: [] as string[],
   })
+
+  const selectedCategoryId = form.category_id || categories[0]?.id || ''
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
     onCreate({
-      ...form,
-      id: crypto.randomUUID(),
-      ingredients: splitLines(form.ingredients),
-      steps: splitLines(form.steps),
-      tags: splitComma(form.tags),
-      createdAt: new Date().toISOString(),
+      category_id: selectedCategoryId,
+      title: form.title,
+      description: form.description,
+      servings: form.portions,
+      prep_time_minutes: form.prepTime,
+      cook_time_minutes: form.cookTime,
+      difficulty: form.difficulty,
+      ingredients: splitLines(form.ingredients).map((name) => ({ name })),
+      instructions: splitLines(form.steps).map((text) => ({ text })),
+      is_public: true,
+      tag_ids: form.tagIds,
     })
   }
 
@@ -43,12 +67,18 @@ export function CreateRecipeView({ onCreate }: { onCreate: (recipe: Recipe) => v
             <input className={controlClassName} required value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
           </Field>
           <Field label="Категория">
-            <input
+            <select
               className={controlClassName}
               required
-              value={form.category}
-              onChange={(event) => setForm({ ...form, category: event.target.value })}
-            />
+              value={selectedCategoryId}
+              onChange={(event) => setForm({ ...form, category_id: event.target.value })}
+            >
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
           </Field>
         </div>
         <Field label="Описание">
@@ -66,9 +96,11 @@ export function CreateRecipeView({ onCreate }: { onCreate: (recipe: Recipe) => v
               value={form.difficulty}
               onChange={(event) => setForm({ ...form, difficulty: event.target.value as Recipe['difficulty'] })}
             >
-              <option>Легко</option>
-              <option>Средне</option>
-              <option>Сложно</option>
+              {difficultyOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </Field>
           <Field label="Время, минут">
@@ -103,11 +135,28 @@ export function CreateRecipeView({ onCreate }: { onCreate: (recipe: Recipe) => v
             <textarea className={textareaMdClassName} required value={form.steps} onChange={(event) => setForm({ ...form, steps: event.target.value })} />
           </Field>
         </div>
-        <Field label="Теги через запятую">
-          <input className={controlClassName} value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} />
-        </Field>
-        <Button className={styles.submit} icon={<Plus size={18} />} type="submit" variant="primary">
-          Сохранить рецепт
+        <div>
+          <p className={styles.fieldTitle}>Теги</p>
+          <div className={styles.tagGrid}>
+            {tags.map((tag) => (
+              <label className={styles.tagOption} key={tag.id}>
+                <input
+                  checked={form.tagIds.includes(tag.id)}
+                  type="checkbox"
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      tagIds: event.target.checked ? [...form.tagIds, tag.id] : form.tagIds.filter((id) => id !== tag.id),
+                    })
+                  }
+                />
+                {tag.name}
+              </label>
+            ))}
+          </div>
+        </div>
+        <Button className={styles.submit} disabled={loading || categories.length === 0} icon={<Plus size={18} />} type="submit" variant="primary">
+          {loading ? 'Сохранение...' : 'Сохранить рецепт'}
         </Button>
       </form>
     </Panel>

@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { loadRecipes, saveRecipes } from '../entities/recipe/model/storage'
 import { AuthView } from '../features/auth/ui/AuthView'
 import { CreateRecipeView } from '../features/create-recipe/ui/CreateRecipeView'
 import { ProfileView } from '../features/profile/ui/ProfileView'
@@ -9,21 +8,25 @@ import { RecipesPage } from '../pages/recipes/ui/RecipesPage'
 import {
   queryKeys,
   useChangePasswordMutation,
+  useCategoriesQuery,
+  useCreateRecipeMutation,
   useForgotPasswordMutation,
   useHealthQuery,
   useLoginMutation,
   useLogoutMutation,
   useMeQuery,
+  useRecipesQuery,
   useRegisterMutation,
   useResendVerificationMutation,
   useResetPasswordMutation,
+  useTagsQuery,
   useUpdateMeMutation,
   useVerifyEmailMutation,
 } from '../shared/api/queries'
 import { storeTokens } from '../shared/api/tokens'
 import { hasOAuthCallback, readInitialTokens } from '../shared/lib/auth'
 import { toNotice } from '../shared/lib/notice'
-import type { AuthMode, AuthResponse, Notice, Recipe, TokenPair, User, View } from '../shared/types'
+import type { AuthMode, AuthResponse, Notice, TokenPair, User, View } from '../shared/types'
 import { NoticeBanner } from '../shared/ui/NoticeBanner/NoticeBanner'
 import { AppHeader } from '../widgets/app-header/ui/AppHeader'
 import { BottomNavbar } from '../widgets/bottom-navbar/ui/BottomNavbar'
@@ -39,11 +42,14 @@ export function App() {
   const [notice, setNotice] = useState<Notice | null>(() =>
     hasOAuthCallback() ? { type: 'success', text: 'Авторизация через OAuth завершена.' } : null,
   )
-  const [recipes, setRecipes] = useState<Recipe[]>(() => loadRecipes())
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('Все')
+  const [category, setCategory] = useState('')
   const healthQuery = useHealthQuery()
   const meQuery = useMeQuery(Boolean(tokens))
+  const recipesQuery = useRecipesQuery({ q: query || undefined, category_id: category || undefined })
+  const categoriesQuery = useCategoriesQuery()
+  const tagsQuery = useTagsQuery()
+  const createRecipeMutation = useCreateRecipeMutation()
   const loginMutation = useLoginMutation()
   const registerMutation = useRegisterMutation()
   const logoutMutation = useLogoutMutation()
@@ -57,6 +63,7 @@ export function App() {
   const loading =
     loginMutation.isPending ||
     registerMutation.isPending ||
+    createRecipeMutation.isPending ||
     updateMeMutation.isPending ||
     changePasswordMutation.isPending ||
     verifyEmailMutation.isPending ||
@@ -65,6 +72,10 @@ export function App() {
     resetPasswordMutation.isPending
   const currentUser = user ?? meQuery.data ?? null
   const backendStatus = healthQuery.isPending ? 'checking' : healthQuery.isError ? 'offline' : 'online'
+  const recipes = recipesQuery.data?.items ?? []
+  const totalRecipes = recipesQuery.data?.total ?? 0
+  const categories = categoriesQuery.data ?? []
+  const tags = tagsQuery.data ?? []
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -89,33 +100,6 @@ export function App() {
 
     return () => window.clearTimeout(timeout)
   }, [meQuery.error, queryClient])
-
-  useEffect(() => {
-    saveRecipes(recipes)
-  }, [recipes])
-
-  const categories = useMemo(
-    () => ['Все', ...Array.from(new Set(recipes.map((recipe) => recipe.category))).sort()],
-    [recipes],
-  )
-
-  const visibleRecipes = useMemo(() => {
-    const normalized = query.trim().toLowerCase()
-    return recipes.filter((recipe) => {
-      const matchesCategory = category === 'Все' || recipe.category === category
-      const searchable = [
-        recipe.title,
-        recipe.description,
-        recipe.category,
-        recipe.difficulty,
-        recipe.ingredients.join(' '),
-        recipe.tags.join(' '),
-      ]
-        .join(' ')
-        .toLowerCase()
-      return matchesCategory && (!normalized || searchable.includes(normalized))
-    })
-  }, [category, query, recipes])
 
   const applyAuth = (response: AuthResponse) => {
     storeTokens(response.tokens)
@@ -166,18 +150,26 @@ export function App() {
                 onCategoryChange={setCategory}
                 onCreate={() => guardedSetView('create')}
                 query={query}
-                recipes={visibleRecipes}
+                recipes={recipes}
                 setQuery={setQuery}
-                total={recipes.length}
+                total={totalRecipes}
               />
             )}
 
             {view === 'create' && (
               <CreateRecipeView
-                onCreate={(recipe) => {
-                  setRecipes((current) => [recipe, ...current])
-                  setView('recipes')
-                  setNotice({ type: 'success', text: 'Рецепт создан локально. Backend-ручку можно подключить через query-хук.' })
+                categories={categories}
+                loading={createRecipeMutation.isPending}
+                tags={tags}
+                onCreate={async (recipe) => {
+                  try {
+                    await createRecipeMutation.mutateAsync(recipe)
+                    await queryClient.invalidateQueries({ queryKey: ['recipes'] })
+                    setView('recipes')
+                    setNotice({ type: 'success', text: 'Рецепт создан.' })
+                  } catch (error) {
+                    setNotice(toNotice(error))
+                  }
                 }}
               />
             )}
@@ -268,7 +260,7 @@ export function App() {
             )}
           </div>
 
-          <StatusSidebar backendStatus={backendStatus} recipesCount={recipes.length} user={currentUser} />
+          <StatusSidebar backendStatus={backendStatus} recipesCount={totalRecipes} user={currentUser} />
         </section>
       </div>
       <BottomNavbar currentView={view} user={currentUser} onNavigate={guardedSetView} />

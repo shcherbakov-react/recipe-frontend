@@ -1,10 +1,14 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import type { User } from '../types'
+import type { CreateRecipeInput, User } from '../types'
 import { authApi } from './auth'
+import { recipesApi } from './recipes'
 
 export const queryKeys = {
   health: ['health'] as const,
   me: ['auth', 'me'] as const,
+  recipes: (params: { q?: string; category_id?: string }) => ['recipes', params] as const,
+  tags: ['recipes', 'tags'] as const,
+  categories: ['recipes', 'categories'] as const,
 }
 
 export function useHealthQuery() {
@@ -75,5 +79,32 @@ export function useForgotPasswordMutation() {
 export function useResetPasswordMutation() {
   return useMutation({
     mutationFn: authApi.resetPassword,
+  })
+}
+
+export function useRecipesQuery(params: { q?: string; category_id?: string }) {
+  return useQuery({
+    queryKey: queryKeys.recipes(params),
+    queryFn: () => recipesApi.list({ ...params, limit: 50 }),
+  })
+}
+
+export function useTagsQuery() {
+  return useQuery({
+    queryKey: queryKeys.tags,
+    queryFn: recipesApi.listTags,
+  })
+}
+
+export function useCategoriesQuery() {
+  return useQuery({
+    queryKey: queryKeys.categories,
+    queryFn: recipesApi.listCategories,
+  })
+}
+
+export function useCreateRecipeMutation() {
+  return useMutation({
+    mutationFn: (input: CreateRecipeInput) => recipesApi.create(input),
   })
 }

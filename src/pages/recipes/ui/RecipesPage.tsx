@@ -1,6 +1,6 @@
 import { Plus, Search } from 'lucide-react'
 import { RecipeCard } from '../../../entities/recipe/ui/RecipeCard'
-import type { BackendStatus, Recipe } from '../../../shared/types'
+import type { BackendStatus, Category, Recipe } from '../../../shared/types'
 import { Button } from '../../../shared/ui/Button/Button'
 import { controlClassName } from '../../../shared/ui/Field/classes'
 import styles from './RecipesPage.module.css'
@@ -8,7 +8,7 @@ import styles from './RecipesPage.module.css'
 export function RecipesPage(props: {
   backendStatus: BackendStatus
   category: string
-  categories: string[]
+  categories: Category[]
   onCategoryChange: (value: string) => void
   onCreate: () => void
   query: string
@@ -23,9 +23,7 @@ export function RecipesPage(props: {
           <div>
             <p className={styles.eyebrow}>Каталог</p>
             <h1 className={styles.title}>Рецепты и заготовки</h1>
-            <p className={styles.description}>
-              Авторизация подключена к backend. Рецепты сохранены локально, потому что в backend пока нет recipe endpoint’ов.
-            </p>
+            <p className={styles.description}>Рецепты, категории и теги загружаются из backend. Категории и теги выбираются из справочников.</p>
             <p className={styles.meta}>Всего: {props.total}. Backend: {props.backendStatus === 'checking' ? 'проверка' : props.backendStatus}.</p>
           </div>
           <Button icon={<Plus size={18} />} onClick={props.onCreate} variant="primary">
@@ -44,8 +42,11 @@ export function RecipesPage(props: {
             />
           </label>
           <select className={controlClassName} onChange={(event) => props.onCategoryChange(event.target.value)} value={props.category}>
+            <option value="">Все категории</option>
             {props.categories.map((item) => (
-              <option key={item}>{item}</option>
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
             ))}
           </select>
         </div>

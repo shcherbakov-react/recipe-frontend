@@ -1,0 +1,101 @@
+.page {
+  display: grid;
+  gap: 1rem;
+}
+
+.hero {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.25rem;
+}
+
+.heroTop {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.eyebrow {
+  color: var(--color-accent-hover);
+  font-size: 0.875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.title {
+  color: var(--color-text);
+  font-size: 1.875rem;
+  font-weight: 900;
+  margin-top: 0.25rem;
+}
+
+.description {
+  color: var(--color-text-muted);
+  margin-top: 0.5rem;
+  max-width: 42rem;
+}
+
+.meta {
+  color: var(--color-text-soft);
+  font-size: 0.875rem;
+  margin-top: 0.75rem;
+}
+
+.filters {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.search {
+  display: block;
+  position: relative;
+}
+
+.searchIcon {
+  color: var(--color-text-soft);
+  left: 0.75rem;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.searchInput {
+  padding-left: 2.5rem;
+}
+
+.cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.empty {
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-muted);
+  padding: 2.5rem;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .filters {
+    grid-template-columns: minmax(0, 1fr) 13.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .heroTop {
+    align-items: flex-end;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 1280px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

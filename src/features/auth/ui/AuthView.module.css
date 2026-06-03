@@ -1,0 +1,39 @@
+.layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.formFields {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.oauthLinks {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.apiUrl {
+  color: var(--color-text-soft);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  margin-top: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 17.5rem;
+  }
+}

@@ -6,7 +6,8 @@ import { recipesApi } from './recipes'
 export const queryKeys = {
   health: ['health'] as const,
   me: ['auth', 'me'] as const,
-  recipes: (params: { q?: string; category_id?: string }) => ['recipes', params] as const,
+  recipes: (params: { q?: string; category_id?: string; scope?: 'public' | 'available' | 'mine' }) => ['recipes', params] as const,
+  randomRecipe: (scope: 'public' | 'available') => ['recipes', 'random', scope] as const,
   tags: ['recipes', 'tags'] as const,
   categories: ['recipes', 'categories'] as const,
 }
@@ -82,10 +83,16 @@ export function useResetPasswordMutation() {
   })
 }
 
-export function useRecipesQuery(params: { q?: string; category_id?: string }) {
+export function useRecipesQuery(params: { q?: string; category_id?: string; scope?: 'public' | 'available' | 'mine' }) {
   return useQuery({
     queryKey: queryKeys.recipes(params),
     queryFn: () => recipesApi.list({ ...params, limit: 50 }),
+  })
+}
+
+export function useRandomRecipeMutation() {
+  return useMutation({
+    mutationFn: (scope: 'public' | 'available') => recipesApi.random(scope),
   })
 }
 

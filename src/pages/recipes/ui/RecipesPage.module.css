@@ -48,6 +48,16 @@
   margin-top: 1.25rem;
 }
 
+.scopeToggle {
+  align-items: center;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  font-size: 0.875rem;
+  font-weight: 700;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
 .search {
   display: block;
   position: relative;

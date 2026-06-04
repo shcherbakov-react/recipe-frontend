@@ -19,6 +19,7 @@ import {
   useRegisterMutation,
   useResendVerificationMutation,
   useResetPasswordMutation,
+  useRandomRecipeMutation,
   useTagsQuery,
   useUpdateMeMutation,
   useVerifyEmailMutation,
@@ -30,7 +31,6 @@ import type { AuthMode, AuthResponse, Notice, TokenPair, User, View } from '../s
 import { NoticeBanner } from '../shared/ui/NoticeBanner/NoticeBanner'
 import { AppHeader } from '../widgets/app-header/ui/AppHeader'
 import { BottomNavbar } from '../widgets/bottom-navbar/ui/BottomNavbar'
-import { StatusSidebar } from '../widgets/status-sidebar/ui/StatusSidebar'
 import styles from './App.module.css'
 
 export function App() {
@@ -44,12 +44,17 @@ export function App() {
   )
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('')
+  const [onlyMine, setOnlyMine] = useState(false)
+  const [randomRecipeID, setRandomRecipeID] = useState<string | null>(null)
   const healthQuery = useHealthQuery()
   const meQuery = useMeQuery(Boolean(tokens))
-  const recipesQuery = useRecipesQuery({ q: query || undefined, category_id: category || undefined })
+  const currentUser = user ?? meQuery.data ?? null
+  const recipesScope = currentUser ? (onlyMine ? 'mine' : 'available') : 'public'
+  const recipesQuery = useRecipesQuery({ q: query || undefined, category_id: category || undefined, scope: recipesScope })
   const categoriesQuery = useCategoriesQuery()
   const tagsQuery = useTagsQuery()
   const createRecipeMutation = useCreateRecipeMutation()
+  const randomRecipeMutation = useRandomRecipeMutation()
   const loginMutation = useLoginMutation()
   const registerMutation = useRegisterMutation()
   const logoutMutation = useLogoutMutation()
@@ -64,15 +69,17 @@ export function App() {
     loginMutation.isPending ||
     registerMutation.isPending ||
     createRecipeMutation.isPending ||
+    randomRecipeMutation.isPending ||
     updateMeMutation.isPending ||
     changePasswordMutation.isPending ||
     verifyEmailMutation.isPending ||
     resendVerificationMutation.isPending ||
     forgotPasswordMutation.isPending ||
     resetPasswordMutation.isPending
-  const currentUser = user ?? meQuery.data ?? null
   const backendStatus = healthQuery.isPending ? 'checking' : healthQuery.isError ? 'offline' : 'online'
-  const recipes = recipesQuery.data?.items ?? []
+  const recipesRaw = recipesQuery.data?.items ?? []
+  const randomRecipe = recipesRaw.find((recipe) => recipe.id === randomRecipeID)
+  const recipes = randomRecipe ? [randomRecipe, ...recipesRaw.filter((recipe) => recipe.id !== randomRecipe.id)] : recipesRaw
   const totalRecipes = recipesQuery.data?.total ?? 0
   const categories = categoriesQuery.data ?? []
   const tags = tagsQuery.data ?? []
@@ -149,9 +156,26 @@ export function App() {
                 categories={categories}
                 onCategoryChange={setCategory}
                 onCreate={() => guardedSetView('create')}
+                onRandom={async () => {
+                  try {
+                    if (onlyMine) {
+                      const recipe = recipesRaw[Math.floor(Math.random() * recipesRaw.length)]
+                      if (recipe) setRandomRecipeID(recipe.id)
+                      return
+                    }
+
+                    const recipe = await randomRecipeMutation.mutateAsync(currentUser ? 'available' : 'public')
+                    setRandomRecipeID(recipe.id)
+                  } catch (error) {
+                    setNotice(toNotice(error))
+                  }
+                }}
+                onlyMine={onlyMine}
                 query={query}
                 recipes={recipes}
                 setQuery={setQuery}
+                setOnlyMine={setOnlyMine}
+                showScopeToggle={Boolean(currentUser)}
                 total={totalRecipes}
               />
             )}
@@ -260,7 +284,6 @@ export function App() {
             )}
           </div>
 
-          <StatusSidebar backendStatus={backendStatus} recipesCount={totalRecipes} user={currentUser} />
         </section>
       </div>
       <BottomNavbar currentView={view} user={currentUser} onNavigate={guardedSetView} />

@@ -39,6 +39,5 @@
 
   .content {
     align-items: start;
-    grid-template-columns: minmax(0, 1fr) 20rem;
   }
 }

@@ -1,4 +1,4 @@
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Shuffle } from 'lucide-react'
 import { RecipeCard } from '../../../entities/recipe/ui/RecipeCard'
 import type { BackendStatus, Category, Recipe } from '../../../shared/types'
 import { Button } from '../../../shared/ui/Button/Button'
@@ -11,9 +11,13 @@ export function RecipesPage(props: {
   categories: Category[]
   onCategoryChange: (value: string) => void
   onCreate: () => void
+  onRandom: () => void
+  onlyMine: boolean
   query: string
   recipes: Recipe[]
   setQuery: (value: string) => void
+  setOnlyMine: (value: boolean) => void
+  showScopeToggle: boolean
   total: number
 }) {
   return (
@@ -28,6 +32,9 @@ export function RecipesPage(props: {
           </div>
           <Button icon={<Plus size={18} />} onClick={props.onCreate} variant="primary">
             Новый рецепт
+          </Button>
+          <Button icon={<Shuffle size={18} />} onClick={props.onRandom} variant="secondary">
+            Случайный рецепт
           </Button>
         </div>
 
@@ -50,6 +57,12 @@ export function RecipesPage(props: {
             ))}
           </select>
         </div>
+        {props.showScopeToggle && (
+          <label className={styles.scopeToggle}>
+            <input checked={props.onlyMine} type="checkbox" onChange={(event) => props.setOnlyMine(event.target.checked)} />
+            Показывать только мои рецепты
+          </label>
+        )}
       </div>
 
       <div className={styles.cards}>

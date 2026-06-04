@@ -2,7 +2,6 @@ import { KeyRound } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { authApi } from '../../../shared/api/auth'
-import { API_URL } from '../../../shared/api/config'
 import type { AuthMode } from '../../../shared/types'
 import { Button, LinkButton } from '../../../shared/ui/Button/Button'
 import { controlClassName } from '../../../shared/ui/Field/classes'
@@ -76,11 +75,8 @@ export function AuthView(props: {
 
       <Panel title="OAuth">
         <div className={styles.oauthLinks}>
-          <LinkButton href={authApi.telegramAuthUrl()}>Telegram</LinkButton>
           <LinkButton href={authApi.yandexAuthUrl()}>Yandex</LinkButton>
-          <LinkButton href={authApi.vkAuthUrl()}>VK</LinkButton>
         </div>
-        <p className={styles.apiUrl}>API: {API_URL}</p>
       </Panel>
     </section>
   )

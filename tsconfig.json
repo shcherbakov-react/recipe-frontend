@@ -30,8 +30,7 @@
     ]
   },
   "include": [
-    //TODO: cделать ./src, когда удалю весь старый код
-    "./src/app/**",
+    "./src",
     "./dist/types/**/*.ts",
     "./next-env.d.ts",
     "dist/types/**/*.ts",
@@ -41,5 +40,6 @@
   ],
   "exclude": [
     "./node_modules",
+    "./src/pages"
   ]
 }

@@ -5,6 +5,10 @@ import './styles/main.css';
 import './styles/variables.css';
 import s from './styles.module.css';
 import { LeftSidebar } from "widgets/LeftSidebar";
+import { Geist } from "next/font/google";
+import { cn } from "lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: 'Рецептор',
@@ -17,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ru">
+    <html lang="ru" className={cn("font-sans", geist.variable)}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

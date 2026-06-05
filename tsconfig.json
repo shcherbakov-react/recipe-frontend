@@ -30,13 +30,16 @@
     ]
   },
   "include": [
-    "./src",
+    //TODO: cделать ./src, когда удалю весь старый код
+    "./src/app/**",
     "./dist/types/**/*.ts",
     "./next-env.d.ts",
     "dist/types/**/*.ts",
-    "dist/dev/types/**/*.ts"
+    "dist/dev/types/**/*.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "./node_modules"
+    "./node_modules",
   ]
 }
